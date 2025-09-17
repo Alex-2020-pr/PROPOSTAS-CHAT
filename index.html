@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Propostas Comerciais</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+        body {
+            background-color: #f1f8e9;
+            color: #333;
+            line-height: 1.4;
+            padding: 15px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        h1 {
+            color: #128C7E;
+            font-size: 24px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #128C7E;
+            padding-bottom: 10px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: #e0f2e9;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: #128C7E;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-container, .preview-container, .history-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        .history-container {
+            grid-column: 1 / -1;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #075E54;
+            font-size: 14px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #128C7E;
+        }
+        .btn-ia {
+            background: #7E57C2;
+            margin-top: 10px;
+        }
+        .btn-ia:hover {
+            background: #5E35B1;
+        }
+        .btn-secondary {
+            background: #78909C;
+        }
+        .btn-secondary:hover {
+            background: #546E7A;
+        }
+        .preview-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .preview-logo {
+            width: 80px;
+            height: 80px;
+            background: #f1f8e9;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #128C7E;
+            font-size: 12px;
+        }
+        .preview-title {
+            color: #128C7E;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .preview-content {
+            font-size: 12px;
+        }
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 11px;
+        }
+        .preview-table th {
+            background: #128C7E;
+            color: white;
+            text-align: left;
+            padding: 8px;
+            font-size: 12px;
+        }
+        .preview-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .history-item:hover {
+            background: #f1f8e9;
+        }
+        .history-client {
+            font-weight: 600;
+            color: #128C7E;
+        }
+        .history-date {
+            font-size: 12px;
+            color: #78909C;
+        }
+        .history-values {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        /* Estilos para impressão */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                font-size: 12px;
+            }
+            header, .tabs, .form-container, .actions, .history-container {
+                display: none;
+            }
+            .preview-container {
+                box-shadow: none;
+                padding: 15px;
+                width: 100%;
+                height: auto;
+                page-break-inside: avoid;
+            }
+        }
+        @media (max-width: 900px) {
+            .tab-content.active {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gerador de Propostas Comerciais</h1>
+            <div>
+                <button class="btn-secondary" onclick="showTab('history')">Histórico de Propostas</button>
+            </div>
+        </header>
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('generator')">Gerar Proposta</div>
+            <div class="tab" onclick="showTab('history')">Histórico</div>
+        </div>
+        <div id="generator" class="tab-content active">
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="clientName">Nome do Cliente</label>
+                    <input type="text" id="clientName" placeholder="Ex: Instituto Paranaense de Saúde" value="Instituto Paranaense de Saúde Nossa Senhora de Fátima">
+                </div>
+                <div class="form-group">
+                    <label for="clientCity">Cidade/Estado do Cliente</label>
+                    <input type="text" id="clientCity" placeholder="Ex: Jandaia do Sul - PR" value="Jandaia do Sul - PR">
+                </div>
+                <div class="form-group">
+                    <label for="licensePrice">Preço da Licença (por conexão)</label>
+                    <input type="number" id="licensePrice" value="350">
+                </div>
+                <!-- NOVO CAMPO ADICIONADO -->
+                <div class="form-group">
+                    <label for="numConnections">Número de Conexões Contratadas</label>
+                    <input type="number" id="numConnections" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="integrationPrice">Preço da Integração</label>
+                    <input type="number" id="integrationPrice" value="200">
+                </div>
+                <div class="form-group">
+                    <label for="researchPrice">Preço da Pesquisa de Satisfação</label>
+                    <input type="number" id="researchPrice" value="200">
+                </div>
+                <div class="form-group">
+                    <label for="implementationPrice">Preço da Implantação</label>
+                    <input type="number" id="implementationPrice" value="950">
+                </div>
+                <div class="form-group">
+                    <label for="additionalConnections">Preço de Conexões Adicionais</label>
+                    <input type="number" id="additionalConnections" value="100">
+                </div>
+                <button onclick="updatePreview()">Gerar Proposta</button>
+                <button class="btn-ia" onclick="improveWithAI()">Melhorar com IA</button>
+            </div>
+            <div class="preview-container">
+                <div class="preview-header">
+                    <div class="preview-logo">
+                        <img src="logo-am2.png" alt="Logo AM2 Saúde" style="max-width: 100%; height: auto;">
+                    </div>
+                    <div class="preview-title">Sistema de Multiatendentes WhatsApp</div>
+                    <div style="font-size: 11px;">Solução completa para atendimento simultâneo</div>
+                </div>
+                <div class="preview-content">
+                    <h2 style="font-size: 16px; color: #128C7E; margin: 10px 0; border-bottom: 1px solid #25D366; padding-bottom: 4px;">PROPOSTA COMERCIAL</h2>
+                    <div style="background: #f1f8e9; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 11px;">
+                        <p><strong>Destinatário:</strong> <span id="preview-client">Instituto Paranaense de Saúde Nossa Senhora de Fátima - Jandaia do Sul - PR</span></p>
+                        <p><strong>Data:</strong> <span id="current-date"></span> | <strong>Validade:</strong> <span id="expiry-date"></span></p>
+                    </div>
+                    <h3 style="font-size: 14px; color: #075E54; margin: 8px 0;">1. APRESENTAÇÃO</h3>
+                    <p>Sistema de Multiatendentes WhatsApp para melhorar a eficiência e organização da comunicação com clientes. Atendimento ágil, centralizado e integrado.</p>
+                    <h3 style="font-size: 14px; color: #075E54; margin: 8px 0;">2. BENEFÍCIOS</h3>
+                    <ul style="padding-left: 15px; margin: 5px 0; font-size: 11px;">
+                        <li>Atendimento Simultâneo - Múltiplos atendentes</li>
+                        <li>Histórico Centralizado - Todas interações registradas</li>
+                        <li>Distribuição Inteligente - Mensagens automáticas</li>
+                        <li>Pesquisa de Satisfação - NPS integrado</li>
+                    </ul>
+                    <h3 style="font-size: 14px; color: #075E54; margin: 8px 0;">3. INVESTIMENTO</h3>
+                    <table class="preview-table">
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Valor</th>
+                        </tr>
+                        <tr>
+                            <td>Licença Mensal (por conexão)</td>
+                            <td>R$ <span id="preview-license">350</span>,00 /mês</td>
+                        </tr>
+                        <tr>
+                            <td>Integração com Sistema de Gestão</td>
+                            <td>R$ <span id="preview-integration">200</span>,00 /mês</td>
+                        </tr>
+                        <tr>
+                            <td>Pesquisa de Satisfação (NPS)</td>
+                            <td>R$ <span id="preview-research">200</span>,00 /mês</td>
+                        </tr>
+                        <tr>
+                            <td>Implantação (configuração inicial)</td>
+                            <td>R$ <span id="preview-implementation">950</span>,00 (único)</td>
+                        </tr>
+                        <tr>
+                            <td>Conexões Adicionais (a partir da 6ª)</td>
+                            <td>R$ <span id="preview-additional">100</span>,00 /mês cada</td>
+                        </tr>
+                    </table>
+                    <div style="background: #e8f5e9; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 11px;">
+                        <h3 style="font-size: 13px; margin: 5px 0;">INVESTIMENTO TOTAL ESTIMADO</h3>
+                        <p><strong>Exemplo para <span id="preview-num-connections-total">1</span> conexão(ões) + integrações:</strong></p>
+                        <p>Licença: <strong>R$ <span id="preview-total-license">350</span>,00 /mês</strong></p>
+                        <p>Integração: <strong>R$ <span id="preview-total-integration">200</span>,00 /mês</strong></p>
+                        <p>Pesquisa: <strong>R$ <span id="preview-total-research">200</span>,00 /mês</strong></p>
+                        <p><strong>Total Mensal: R$ <span id="preview-total">750</span>,00 /mês</strong></p>
+                        <p>Implantação: <strong>R$ <span id="preview-total-implementation">950</span>,00 (único)</strong></p>
+                    </div>
+                    <div style="text-align: center; background: #075E54; color: white; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 11px;">
+                        <h3 style="margin: 5px 0; font-size: 13px;">PRONTO PARA OTIMIZAR SEU ATENDIMENTO?</h3>
+                        <p>Entre em contato para agendar uma demonstração</p>
+                        <p><strong>comercial@am2saude.com.br | (45) 9 9990-1802</strong></p>
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 8px; background: #073d36; color: white; border-radius: 0 0 4px 4px; margin: 15px -20px -20px -20px; font-size: 10px;">
+                    <p>Rua Sete de setembro, 2734, sala 21 - Cascavel - PR</p>
+                    <p>© <span id="current-year">2025</span> - Todos os direitos reservados</p>
+                </div>
+            </div>
+            <div class="actions">
+                <button onclick="saveProposal()">Salvar Proposta</button>
+                <button onclick="window.print()">Imprimir / Gerar PDF</button>
+                <button class="btn-secondary" onclick="clearForm()">Nova Proposta</button>
+            </div>
+        </div>
+        <div id="history" class="tab-content">
+            <div class="history-container">
+                <h2>Histórico de Propostas</h2>
+                <p>Clique em uma proposta para visualizar ou recuperar os dados.</p>
+                <div class="history-list" id="historyList">
+                    <p id="emptyHistory">Nenhuma proposta salva ainda.</p>
+                </div>
+                <div class="actions">
+                    <button class="btn-secondary" onclick="clearHistory()">Limpar Histórico</button>
+                    <button onclick="showTab('generator')">Voltar para Gerador</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Função para mostrar/ocultar abas
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelector(`.tab:nth-child(${tabId === 'generator' ? 1 : 2})`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            if (tabId === 'history') {
+                loadHistory();
+            }
+        }
+        // Função para formatar a data no formato dd/mm/aaaa
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        // Função para formatar a data e hora completa
+        function formatDateTime(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }
+        // Obter a data atual
+        const currentDate = new Date();
+        document.getElementById('current-date').textContent = formatDate(currentDate);
+        // Calcular a data de expiração (30 dias a partir de hoje)
+        const expiryDate = new Date();
+        expiryDate.setDate(currentDate.getDate() + 30);
+        document.getElementById('expiry-date').textContent = formatDate(expiryDate);
+        // Definir o ano atual como 2025
+        document.getElementById('current-year').textContent = "2025";
+        // Função para atualizar a visualização com os valores do formulário
+        function updatePreview() {
+            // Obter valores do formulário
+            const clientName = document.getElementById('clientName').value;
+            const clientCity = document.getElementById('clientCity').value;
+            const licensePrice = parseInt(document.getElementById('licensePrice').value);
+            const integrationPrice = parseInt(document.getElementById('integrationPrice').value);
+            const researchPrice = parseInt(document.getElementById('researchPrice').value);
+            const implementationPrice = parseInt(document.getElementById('implementationPrice').value);
+            const additionalConnections = parseInt(document.getElementById('additionalConnections').value);
+            const numConnections = parseInt(document.getElementById('numConnections').value) || 1;
+
+            // Calcular o custo total da licença com base no número de conexões
+            let totalLicenseCost = 0;
+            if (numConnections <= 5) {
+                totalLicenseCost = licensePrice * numConnections;
+            } else {
+                totalLicenseCost = (licensePrice * 5) + (additionalConnections * (numConnections - 5));
+            }
+
+            // Calcular totais
+            const totalMonthly = totalLicenseCost + integrationPrice + researchPrice;
+
+            // Atualizar visualização
+            document.getElementById('preview-client').textContent = `${clientName} - ${clientCity}`;
+            document.getElementById('preview-license').textContent = licensePrice; // Valor UNITÁRIO na tabela
+            document.getElementById('preview-integration').textContent = integrationPrice;
+            document.getElementById('preview-research').textContent = researchPrice;
+            document.getElementById('preview-implementation').textContent = implementationPrice;
+            document.getElementById('preview-additional').textContent = additionalConnections;
+
+            // Atualizar os campos de total que agora dependem do cálculo
+            document.getElementById('preview-total-license').textContent = totalLicenseCost.toLocaleString('pt-BR'); // Valor TOTAL no resumo
+            document.getElementById('preview-total-integration').textContent = integrationPrice;
+            document.getElementById('preview-total-research').textContent = researchPrice;
+            document.getElementById('preview-total').textContent = totalMonthly.toLocaleString('pt-BR');
+            document.getElementById('preview-total-implementation').textContent = implementationPrice;
+
+            // Atualizar o texto dinâmico com o número de conexões
+            document.getElementById('preview-num-connections-total').textContent = numConnections;
+
+            alert('Proposta atualizada com sucesso!');
+        }
+        // Função para salvar a proposta no histórico
+        function saveProposal() {
+            const clientName = document.getElementById('clientName').value;
+            if (!clientName) {
+                alert('Por favor, informe o nome do cliente antes de salvar.');
+                return;
+            }
+            const now = new Date();
+            const proposal = {
+                id: Date.now(),
+                date: now.toISOString(),
+                displayName: `${clientName} - ${formatDateTime(now)}`,
+                clientName: clientName,
+                clientCity: document.getElementById('clientCity').value,
+                licensePrice: document.getElementById('licensePrice').value,
+                integrationPrice: document.getElementById('integrationPrice').value,
+                researchPrice: document.getElementById('researchPrice').value,
+                implementationPrice: document.getElementById('implementationPrice').value,
+                additionalConnections: document.getElementById('additionalConnections').value,
+                numConnections: document.getElementById('numConnections').value // Salva o número de conexões
+            };
+            let history = JSON.parse(localStorage.getItem('proposalHistory')) || [];
+            history.unshift(proposal);
+            // Manter apenas as 50 propostas mais recentes
+            if (history.length > 50) {
+                history = history.slice(0, 50);
+            }
+            localStorage.setItem('proposalHistory', JSON.stringify(history));
+            alert(`Proposta para ${clientName} salva no histórico!`);
+        }
+        // Função para carregar o histórico
+        function loadHistory() {
+            const historyList = document.getElementById('historyList');
+            const emptyHistory = document.getElementById('emptyHistory');
+            const history = JSON.parse(localStorage.getItem('proposalHistory')) || [];
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                emptyHistory.style.display = 'block';
+                return;
+            }
+            emptyHistory.style.display = 'none';
+            history.forEach(proposal => {
+                // Recalcula o total da licença para exibir no histórico
+                const licensePrice = parseInt(proposal.licensePrice);
+                const additionalConnections = parseInt(proposal.additionalConnections);
+                const numConnections = parseInt(proposal.numConnections) || 1;
+                let totalLicenseCost = 0;
+                if (numConnections <= 5) {
+                    totalLicenseCost = licensePrice * numConnections;
+                } else {
+                    totalLicenseCost = (licensePrice * 5) + (additionalConnections * (numConnections - 5));
+                }
+                const total = totalLicenseCost + parseInt(proposal.integrationPrice) + parseInt(proposal.researchPrice);
+
+                const date = new Date(proposal.date);
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <div class="history-client">${proposal.displayName}</div>
+                    <div class="history-values">Total: R$ ${total},00/mês + R$ ${proposal.implementationPrice},00 (implantação)</div>
+                `;
+                item.addEventListener('click', () => {
+                    if (confirm('Deseja carregar esta proposta?')) {
+                        loadProposal(proposal);
+                        showTab('generator');
+                    }
+                });
+                historyList.appendChild(item);
+            });
+        }
+        // Função para carregar uma proposta do histórico
+        function loadProposal(proposal) {
+            document.getElementById('clientName').value = proposal.clientName;
+            document.getElementById('clientCity').value = proposal.clientCity;
+            document.getElementById('licensePrice').value = proposal.licensePrice;
+            document.getElementById('integrationPrice').value = proposal.integrationPrice;
+            document.getElementById('researchPrice').value = proposal.researchPrice;
+            document.getElementById('implementationPrice').value = proposal.implementationPrice;
+            document.getElementById('additionalConnections').value = proposal.additionalConnections;
+            document.getElementById('numConnections').value = proposal.numConnections || 1; // Carrega o número de conexões
+            updatePreview();
+        }
+        // Função para limpar o histórico
+        function clearHistory() {
+            if (confirm('Tem certeza que deseja limpar todo o histórico?')) {
+                localStorage.removeItem('proposalHistory');
+                loadHistory();
+            }
+        }
+        // Função para limpar o formulário
+        function clearForm() {
+            if (confirm('Deseja criar uma nova proposta? Os dados atuais serão perdidos.')) {
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientCity').value = '';
+                document.getElementById('licensePrice').value = '350';
+                document.getElementById('numConnections').value = '1'; // Reseta para 1
+                document.getElementById('integrationPrice').value = '200';
+                document.getElementById('researchPrice').value = '200';
+                document.getElementById('implementationPrice').value = '950';
+                document.getElementById('additionalConnections').value = '100';
+                updatePreview();
+            }
+        }
+        // Função para melhorar com IA (simulação)
+        function improveWithAI() {
+            alert('Recurso de IA em desenvolvimento. Em uma implementação real, esta função enviaria os dados para uma API de IA como ChatGPT para melhorar o conteúdo e layout da proposta.');
+            // Simulação de melhoria com IA
+            document.getElementById('clientName').value = "Instituto Paranaense de Saúde Nossa Senhora de Fátima - " + 
+                document.getElementById('clientName').value;
+            updatePreview();
+        }
+        // Inicializar a visualização com os valores padrão
+        window.onload = function() {
+            updatePreview();
+        };
+    </script>
+</body>
+</html>
