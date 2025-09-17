@@ -293,33 +293,16 @@
                             <th>Descrição</th>
                             <th>Valor</th>
                         </tr>
-                        <tr>
-                            <td>Licença Mensal (por conexão)</td>
-                            <td>R$ <span id="preview-license">350</span>,00 /mês</td>
-                        </tr>
-                        <tr>
-                            <td>Integração com Sistema de Gestão</td>
-                            <td>R$ <span id="preview-integration">200</span>,00 /mês</td>
-                        </tr>
-                        <tr>
-                            <td>Pesquisa de Satisfação (NPS)</td>
-                            <td>R$ <span id="preview-research">200</span>,00 /mês</td>
-                        </tr>
-                        <tr>
-                            <td>Implantação (configuração inicial)</td>
-                            <td>R$ <span id="preview-implementation">950</span>,00 (único)</td>
-                        </tr>
-                        <tr>
-                            <td>Conexões Adicionais (a partir da 6ª)</td>
-                            <td>R$ <span id="preview-additional">100</span>,00 /mês cada</td>
-                        </tr>
+                        <tbody id="investmentTableBody">
+                            <!-- As linhas serão geradas dinamicamente pelo JavaScript -->
+                        </tbody>
                     </table>
                     <div style="background: #e8f5e9; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 11px;">
                         <h3 style="font-size: 13px; margin: 5px 0;">INVESTIMENTO TOTAL ESTIMADO</h3>
                         <p><strong>Exemplo para <span id="preview-num-connections-total">1</span> conexão(ões) + integrações:</strong></p>
-                        <p>Licença: <strong>R$ <span id="preview-total-license">350</span>,00 /mês</strong></p>
-                        <p>Integração: <strong>R$ <span id="preview-total-integration">200</span>,00 /mês</strong></p>
-                        <p>Pesquisa: <strong>R$ <span id="preview-total-research">200</span>,00 /mês</strong></p>
+                        <div id="totalBreakdown">
+                            <!-- Os itens de custo total serão inseridos aqui dinamicamente -->
+                        </div>
                         <p><strong>Total Mensal: R$ <span id="preview-total">750</span>,00 /mês</strong></p>
                         <p>Implantação: <strong>R$ <span id="preview-total-implementation">950</span>,00 (único)</strong></p>
                     </div>
@@ -395,7 +378,7 @@
         // Definir o ano atual como 2025
         document.getElementById('current-year').textContent = "2025";
         // Função para atualizar a visualização com os valores do formulário
-        function updatePreview() {
+        function updatePreview(suppressAlert = false) {
             // Obter valores do formulário
             const clientName = document.getElementById('clientName').value;
             const clientCity = document.getElementById('clientCity').value;
@@ -419,23 +402,89 @@
 
             // Atualizar visualização
             document.getElementById('preview-client').textContent = `${clientName} - ${clientCity}`;
-            document.getElementById('preview-license').textContent = licensePrice; // Valor UNITÁRIO na tabela
-            document.getElementById('preview-integration').textContent = integrationPrice;
-            document.getElementById('preview-research').textContent = researchPrice;
-            document.getElementById('preview-implementation').textContent = implementationPrice;
-            document.getElementById('preview-additional').textContent = additionalConnections;
+            document.getElementById('preview-num-connections-total').textContent = numConnections;
 
-            // Atualizar os campos de total que agora dependem do cálculo
-            document.getElementById('preview-total-license').textContent = totalLicenseCost.toLocaleString('pt-BR'); // Valor TOTAL no resumo
-            document.getElementById('preview-total-integration').textContent = integrationPrice;
-            document.getElementById('preview-total-research').textContent = researchPrice;
+            // Atualizar a tabela de investimento dinamicamente
+            const tableBody = document.getElementById('investmentTableBody');
+            tableBody.innerHTML = '';
+
+            // Linha da Licença (sempre visível, pois é o produto principal)
+            const licenseRow = document.createElement('tr');
+            licenseRow.innerHTML = `
+                <td>Licença Mensal (por conexão)</td>
+                <td>R$ ${licensePrice},00 /mês</td>
+            `;
+            tableBody.appendChild(licenseRow);
+
+            // Linha de Conexões Adicionais (sempre visível, para informação)
+            const additionalRow = document.createElement('tr');
+            additionalRow.innerHTML = `
+                <td>Conexões Adicionais (a partir da 6ª)</td>
+                <td>R$ ${additionalConnections},00 /mês cada</td>
+            `;
+            tableBody.appendChild(additionalRow);
+
+            // Adiciona linha de Integração apenas se o valor for > 0
+            if (integrationPrice > 0) {
+                const integrationRow = document.createElement('tr');
+                integrationRow.innerHTML = `
+                    <td>Integração com Sistema de Gestão</td>
+                    <td>R$ ${integrationPrice},00 /mês</td>
+                `;
+                tableBody.appendChild(integrationRow);
+            }
+
+            // Adiciona linha de Pesquisa apenas se o valor for > 0
+            if (researchPrice > 0) {
+                const researchRow = document.createElement('tr');
+                researchRow.innerHTML = `
+                    <td>Pesquisa de Satisfação (NPS)</td>
+                    <td>R$ ${researchPrice},00 /mês</td>
+                `;
+                tableBody.appendChild(researchRow);
+            }
+
+            // Adiciona linha de Implantação apenas se o valor for > 0
+            if (implementationPrice > 0) {
+                const implementationRow = document.createElement('tr');
+                implementationRow.innerHTML = `
+                    <td>Implantação (configuração inicial)</td>
+                    <td>R$ ${implementationPrice},00 (único)</td>
+                `;
+                tableBody.appendChild(implementationRow);
+            }
+
+            // Atualizar o bloco de investimento total estimado
+            const totalBreakdown = document.getElementById('totalBreakdown');
+            totalBreakdown.innerHTML = '';
+
+            // Sempre mostra o total da licença
+            const licenseTotalItem = document.createElement('p');
+            licenseTotalItem.innerHTML = `Licença: <strong>R$ ${totalLicenseCost.toLocaleString('pt-BR')},00 /mês</strong>`;
+            totalBreakdown.appendChild(licenseTotalItem);
+
+            // Mostra Integração no resumo apenas se > 0
+            if (integrationPrice > 0) {
+                const integrationTotalItem = document.createElement('p');
+                integrationTotalItem.innerHTML = `Integração: <strong>R$ ${integrationPrice},00 /mês</strong>`;
+                totalBreakdown.appendChild(integrationTotalItem);
+            }
+
+            // Mostra Pesquisa no resumo apenas se > 0
+            if (researchPrice > 0) {
+                const researchTotalItem = document.createElement('p');
+                researchTotalItem.innerHTML = `Pesquisa: <strong>R$ ${researchPrice},00 /mês</strong>`;
+                totalBreakdown.appendChild(researchTotalItem);
+            }
+
+            // Atualiza os totais gerais
             document.getElementById('preview-total').textContent = totalMonthly.toLocaleString('pt-BR');
             document.getElementById('preview-total-implementation').textContent = implementationPrice;
 
-            // Atualizar o texto dinâmico com o número de conexões
-            document.getElementById('preview-num-connections-total').textContent = numConnections;
-
-            alert('Proposta atualizada com sucesso!');
+            // Exibe alerta apenas se suppressAlert for false
+            if (!suppressAlert) {
+                alert('Proposta atualizada com sucesso!');
+            }
         }
         // Função para salvar a proposta no histórico
         function saveProposal() {
@@ -537,7 +586,7 @@
                 document.getElementById('researchPrice').value = '200';
                 document.getElementById('implementationPrice').value = '950';
                 document.getElementById('additionalConnections').value = '100';
-                updatePreview();
+                updatePreview(true); // Chama sem alerta
             }
         }
         // Função para melhorar com IA (simulação)
@@ -548,9 +597,9 @@
                 document.getElementById('clientName').value;
             updatePreview();
         }
-        // Inicializar a visualização com os valores padrão
+        // Inicializar a visualização com os valores padrão, SEM exibir o alerta
         window.onload = function() {
-            updatePreview();
+            updatePreview(true); // Passa true para suprimir o alerta na inicialização
         };
     </script>
 </body>
