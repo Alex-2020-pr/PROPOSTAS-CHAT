@@ -398,7 +398,6 @@
             const additionalConnections = parseInt(document.getElementById('additionalConnections').value);
             const numConnections = parseInt(document.getElementById('numConnections').value) || 1;
             const commercialNotes = document.getElementById('commercialNotes').value.trim();
-
             // Calcular o custo total da licença com base no número de conexões
             let totalLicenseCost = 0;
             if (numConnections <= 5) {
@@ -406,18 +405,14 @@
             } else {
                 totalLicenseCost = (licensePrice * 5) + (additionalConnections * (numConnections - 5));
             }
-
             // Calcular totais
             const totalMonthly = totalLicenseCost + integrationPrice + researchPrice;
-
             // Atualizar visualização
             document.getElementById('preview-client').textContent = `${clientName} - ${clientCity}`;
             document.getElementById('preview-num-connections-total').textContent = numConnections;
-
             // Atualizar a tabela de investimento dinamicamente
             const tableBody = document.getElementById('investmentTableBody');
             tableBody.innerHTML = '';
-
             // Linha da Licença (sempre visível, pois é o produto principal)
             const licenseRow = document.createElement('tr');
             licenseRow.innerHTML = `
@@ -425,7 +420,6 @@
                 <td>R$ ${licensePrice},00 /mês</td>
             `;
             tableBody.appendChild(licenseRow);
-
             // Linha de Conexões Adicionais (sempre visível, para informação)
             const additionalRow = document.createElement('tr');
             additionalRow.innerHTML = `
@@ -433,7 +427,6 @@
                 <td>R$ ${additionalConnections},00 /mês cada</td>
             `;
             tableBody.appendChild(additionalRow);
-
             // Adiciona linha de Integração apenas se o valor for > 0
             if (integrationPrice > 0) {
                 const integrationRow = document.createElement('tr');
@@ -443,7 +436,6 @@
                 `;
                 tableBody.appendChild(integrationRow);
             }
-
             // Adiciona linha de Pesquisa apenas se o valor for > 0
             if (researchPrice > 0) {
                 const researchRow = document.createElement('tr');
@@ -453,7 +445,6 @@
                 `;
                 tableBody.appendChild(researchRow);
             }
-
             // Adiciona linha de Implantação apenas se o valor for > 0
             if (implementationPrice > 0) {
                 const implementationRow = document.createElement('tr');
@@ -463,44 +454,37 @@
                 `;
                 tableBody.appendChild(implementationRow);
             }
-
             // Atualizar o bloco de investimento total estimado
             const totalBreakdown = document.getElementById('totalBreakdown');
             totalBreakdown.innerHTML = '';
-
             // Sempre mostra o total da licença
             const licenseTotalItem = document.createElement('p');
             licenseTotalItem.innerHTML = `Licença: <strong>R$ ${totalLicenseCost.toLocaleString('pt-BR')},00 /mês</strong>`;
             totalBreakdown.appendChild(licenseTotalItem);
-
             // Mostra Integração no resumo apenas se > 0
             if (integrationPrice > 0) {
                 const integrationTotalItem = document.createElement('p');
                 integrationTotalItem.innerHTML = `Integração: <strong>R$ ${integrationPrice},00 /mês</strong>`;
                 totalBreakdown.appendChild(integrationTotalItem);
             }
-
             // Mostra Pesquisa no resumo apenas se > 0
             if (researchPrice > 0) {
                 const researchTotalItem = document.createElement('p');
                 researchTotalItem.innerHTML = `Pesquisa: <strong>R$ ${researchPrice},00 /mês</strong>`;
                 totalBreakdown.appendChild(researchTotalItem);
             }
-
             // Atualiza os totais gerais
             document.getElementById('preview-total').textContent = totalMonthly.toLocaleString('pt-BR');
             document.getElementById('preview-total-implementation').textContent = implementationPrice;
-
             // Atualizar as Observações Comerciais
             const notesContainer = document.getElementById('preview-commercial-notes-container');
             const notesContent = document.getElementById('preview-commercial-notes');
             if (commercialNotes) {
-                notesContent.textContent = commercialNotes;
+                notesContent.innerHTML = commercialNotes.replace(/\n/g, '<br>');
                 notesContainer.style.display = 'block';
             } else {
                 notesContainer.style.display = 'none';
             }
-
             // Exibe alerta apenas se suppressAlert for false
             if (!suppressAlert) {
                 alert('Proposta atualizada com sucesso!');
@@ -560,7 +544,6 @@
                     totalLicenseCost = (licensePrice * 5) + (additionalConnections * (numConnections - 5));
                 }
                 const total = totalLicenseCost + parseInt(proposal.integrationPrice) + parseInt(proposal.researchPrice);
-
                 const date = new Date(proposal.date);
                 const item = document.createElement('div');
                 item.className = 'history-item';
