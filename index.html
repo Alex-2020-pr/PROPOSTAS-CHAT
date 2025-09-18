@@ -240,7 +240,6 @@
                     <label for="licensePrice">Preço da Licença (por conexão)</label>
                     <input type="number" id="licensePrice" value="350">
                 </div>
-                <!-- NOVO CAMPO ADICIONADO -->
                 <div class="form-group">
                     <label for="numConnections">Número de Conexões Contratadas</label>
                     <input type="number" id="numConnections" value="1" min="1">
@@ -260,6 +259,11 @@
                 <div class="form-group">
                     <label for="additionalConnections">Preço de Conexões Adicionais</label>
                     <input type="number" id="additionalConnections" value="100">
+                </div>
+                <!-- NOVO CAMPO DE OBSERVAÇÕES -->
+                <div class="form-group">
+                    <label for="commercialNotes">Observações Comerciais (Detalhes da Negociação)</label>
+                    <textarea id="commercialNotes" rows="4" placeholder="Ex: Desconto de 10% válido por 30 dias, pagamento em 2x sem juros, etc."></textarea>
                 </div>
                 <button onclick="updatePreview()">Gerar Proposta</button>
                 <button class="btn-ia" onclick="improveWithAI()">Melhorar com IA</button>
@@ -287,6 +291,11 @@
                         <li>Distribuição Inteligente - Mensagens automáticas</li>
                         <li>Pesquisa de Satisfação - NPS integrado</li>
                     </ul>
+                    <!-- SEÇÃO DE OBSERVAÇÕES (aparece apenas se houver texto) -->
+                    <div id="preview-commercial-notes-container" style="display: none; margin: 15px 0;">
+                        <h3 style="font-size: 14px; color: #075E54; margin: 8px 0;">4. OBSERVAÇÕES COMERCIAIS</h3>
+                        <div id="preview-commercial-notes" style="background: #fff3e0; padding: 10px; border-left: 4px solid #ff9800; border-radius: 4px; font-style: italic;"></div>
+                    </div>
                     <h3 style="font-size: 14px; color: #075E54; margin: 8px 0;">3. INVESTIMENTO</h3>
                     <table class="preview-table">
                         <tr>
@@ -388,6 +397,7 @@
             const implementationPrice = parseInt(document.getElementById('implementationPrice').value);
             const additionalConnections = parseInt(document.getElementById('additionalConnections').value);
             const numConnections = parseInt(document.getElementById('numConnections').value) || 1;
+            const commercialNotes = document.getElementById('commercialNotes').value.trim();
 
             // Calcular o custo total da licença com base no número de conexões
             let totalLicenseCost = 0;
@@ -481,6 +491,16 @@
             document.getElementById('preview-total').textContent = totalMonthly.toLocaleString('pt-BR');
             document.getElementById('preview-total-implementation').textContent = implementationPrice;
 
+            // Atualizar as Observações Comerciais
+            const notesContainer = document.getElementById('preview-commercial-notes-container');
+            const notesContent = document.getElementById('preview-commercial-notes');
+            if (commercialNotes) {
+                notesContent.textContent = commercialNotes;
+                notesContainer.style.display = 'block';
+            } else {
+                notesContainer.style.display = 'none';
+            }
+
             // Exibe alerta apenas se suppressAlert for false
             if (!suppressAlert) {
                 alert('Proposta atualizada com sucesso!');
@@ -505,7 +525,8 @@
                 researchPrice: document.getElementById('researchPrice').value,
                 implementationPrice: document.getElementById('implementationPrice').value,
                 additionalConnections: document.getElementById('additionalConnections').value,
-                numConnections: document.getElementById('numConnections').value // Salva o número de conexões
+                numConnections: document.getElementById('numConnections').value, // Salva o número de conexões
+                commercialNotes: document.getElementById('commercialNotes').value // Salva as observações
             };
             let history = JSON.parse(localStorage.getItem('proposalHistory')) || [];
             history.unshift(proposal);
@@ -566,6 +587,7 @@
             document.getElementById('implementationPrice').value = proposal.implementationPrice;
             document.getElementById('additionalConnections').value = proposal.additionalConnections;
             document.getElementById('numConnections').value = proposal.numConnections || 1; // Carrega o número de conexões
+            document.getElementById('commercialNotes').value = proposal.commercialNotes || ''; // Carrega as observações
             updatePreview();
         }
         // Função para limpar o histórico
@@ -581,11 +603,12 @@
                 document.getElementById('clientName').value = '';
                 document.getElementById('clientCity').value = '';
                 document.getElementById('licensePrice').value = '350';
-                document.getElementById('numConnections').value = '1'; // Reseta para 1
+                document.getElementById('numConnections').value = '1';
                 document.getElementById('integrationPrice').value = '200';
                 document.getElementById('researchPrice').value = '200';
                 document.getElementById('implementationPrice').value = '950';
                 document.getElementById('additionalConnections').value = '100';
+                document.getElementById('commercialNotes').value = ''; // Limpa as observações
                 updatePreview(true); // Chama sem alerta
             }
         }
