@@ -120,17 +120,17 @@
             margin-bottom: 15px;
         }
         .preview-logo {
-            width: 80px;
+            width: 120px;
             height: 80px;
-            background: #f1f8e9;
             margin: 0 auto 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-weight: bold;
-            color: #128C7E;
-            font-size: 12px;
+        }
+        .preview-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
         .preview-title {
             color: #128C7E;
@@ -265,6 +265,10 @@
             .actions, header, .tabs, .form-container {
                 display: none !important;
             }
+            .preview-logo img {
+                max-width: 100px;
+                max-height: 60px;
+            }
         }
 
         @media (max-width: 900px) {
@@ -343,7 +347,8 @@ Marketing (Aniversário, Campanhas): R$0,99</div>
             <div class="preview-container" id="pdf-preview">
                 <div class="preview-header">
                     <div class="preview-logo">
-                        <div style="color: #128C7E; font-weight: bold; text-align: center;">
+                        <img src="am2logo5.jpg" alt="Logo AM2 Saúde" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div style="display: none; color: #128C7E; font-weight: bold; text-align: center; padding: 10px;">
                             LOGO<br>AM2<br>SAÚDE
                         </div>
                     </div>
@@ -683,7 +688,7 @@ Marketing (Aniversário, Campanhas): R$0,99</div>
                     scale: 2,
                     useCORS: true,
                     logging: false,
-                    width: 800, // Largura fixa para controle
+                    width: 800,
                     windowWidth: 800
                 },
                 jsPDF: { 
@@ -692,7 +697,7 @@ Marketing (Aniversário, Campanhas): R$0,99</div>
                     orientation: 'portrait',
                     compress: true
                 },
-                pagebreak: { mode: 'avoid-all' } // Evita quebra de página
+                pagebreak: { mode: 'avoid-all' }
             };
 
             // Adicionar estilos específicos para PDF
@@ -712,15 +717,34 @@ Marketing (Aniversário, Campanhas): R$0,99</div>
             }).catch(error => {
                 console.error('Erro ao gerar PDF:', error);
                 alert('Erro ao gerar PDF. Tente usar a opção "Imprimir Direto".');
-                // Restaurar estilos originais
                 element.setAttribute('style', originalStyles);
             });
         }
 
-        // Inicializar
-        window.onload = function() {
+        // Verificar se o logo carrega corretamente
+        window.addEventListener('load', function() {
+            const logo = document.querySelector('.preview-logo img');
+            if (logo) {
+                logo.onerror = function() {
+                    this.style.display = 'none';
+                    const fallback = this.nextElementSibling;
+                    if (fallback) {
+                        fallback.style.display = 'block';
+                    }
+                };
+                
+                // Verificar se a imagem carregou
+                if (logo.complete && logo.naturalHeight === 0) {
+                    logo.style.display = 'none';
+                    const fallback = logo.nextElementSibling;
+                    if (fallback) {
+                        fallback.style.display = 'block';
+                    }
+                }
+            }
+            
             updatePreview(true);
-        };
+        });
     </script>
 </body>
 </html>
