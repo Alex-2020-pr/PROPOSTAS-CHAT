@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Propostas Comerciais</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
         * {
@@ -189,24 +190,83 @@
             font-size: 12px;
             margin-top: 5px;
         }
-        /* Estilos para impressão */
+        
+        .editor-toolbar {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .editor-btn {
+            padding: 6px 10px;
+            background: #ffffff;
+            border: 1px solid #cccccc;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #333333;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .editor-btn:hover {
+            background: #e9e9e9;
+            border-color: #999999;
+        }
+        .editor-btn.active {
+            background: #128C7E;
+            color: white;
+            border-color: #128C7E;
+        }
+        .editor-select {
+            padding: 6px 8px;
+            background: #ffffff;
+            border: 1px solid #cccccc;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #333333;
+            font-weight: 600;
+        }
+        #commercialNotes {
+            min-height: 100px;
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+        }
+        #commercialNotes ul, #commercialNotes ol {
+            padding-left: 20px;
+            margin: 5px 0;
+        }
+        #commercialNotes li {
+            margin-bottom: 2px;
+        }
+
+        /* ESTILOS PARA IMPRESSÃO DIRETA */
         @media print {
-            body {
-                background: white;
-                padding: 0;
-                font-size: 12px;
+            body * {
+                visibility: hidden;
             }
-            header, .tabs, .form-container, .actions, .history-container {
-                display: none;
+            .preview-container, .preview-container * {
+                visibility: visible;
             }
             .preview-container {
-                box-shadow: none;
-                padding: 15px;
+                position: absolute;
+                left: 0;
+                top: 0;
                 width: 100%;
-                height: auto;
-                page-break-inside: avoid;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                background: white;
+            }
+            .actions, header, .tabs, .form-container {
+                display: none !important;
             }
         }
+
         @media (max-width: 900px) {
             .tab-content.active {
                 grid-template-columns: 1fr;
@@ -260,18 +320,32 @@
                     <label for="additionalConnections">Preço de Conexões Adicionais</label>
                     <input type="number" id="additionalConnections" value="100">
                 </div>
-                <!-- NOVO CAMPO DE OBSERVAÇÕES -->
+                
                 <div class="form-group">
                     <label for="commercialNotes">Observações Comerciais (Detalhes da Negociação)</label>
-                    <textarea id="commercialNotes" rows="4" placeholder="Ex: Desconto de 10% válido por 30 dias, pagamento em 2x sem juros, etc."></textarea>
+                    <div class="editor-toolbar">
+                        <button type="button" class="editor-btn" onclick="formatText('bold')" title="Negrito"><b>B</b></button>
+                        <button type="button" class="editor-btn" onclick="formatText('italic')" title="Itálico"><i>I</i></button>
+                        <button type="button" class="editor-btn" onclick="formatText('underline')" title="Sublinhado"><u>S</u></button>
+                        <button type="button" class="editor-btn" onclick="formatText('insertUnorderedList')" title="Lista">•</button>
+                        <button type="button" class="editor-btn" onclick="formatText('insertOrderedList')" title="Lista numerada">1.</button>
+                    </div>
+                    <div id="commercialNotes" contenteditable="true" style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; min-height: 100px; background: white;">Ex: Valores API Oficial Whatsapp:
+Utility (Exames, Confirmações) - R$0,13
+Marketing (Aniversário, Campanhas): R$0,99</div>
                 </div>
+                
                 <button onclick="updatePreview()">Gerar Proposta</button>
                 <button class="btn-ia" onclick="improveWithAI()">Melhorar com IA</button>
             </div>
-            <div class="preview-container">
+            
+            <!-- CONTAINER DE PREVIEW QUE SERÁ USADO PARA PDF -->
+            <div class="preview-container" id="pdf-preview">
                 <div class="preview-header">
                     <div class="preview-logo">
-                        <img src="logo-am2.png" alt="Logo AM2 Saúde" style="max-width: 100%; height: auto;">
+                        <div style="color: #128C7E; font-weight: bold; text-align: center;">
+                            LOGO<br>AM2<br>SAÚDE
+                        </div>
                     </div>
                     <div class="preview-title">Sistema de Multiatendentes WhatsApp</div>
                     <div style="font-size: 11px;">Solução completa para atendimento simultâneo</div>
@@ -290,8 +364,9 @@
                         <li>Histórico Centralizado - Todas interações registradas</li>
                         <li>Distribuição Inteligente - Mensagens automáticas</li>
                         <li>Pesquisa de Satisfação - NPS integrado</li>
+                        <li>Mensagens Ilimitadas</li>
+                        <li>Usuários Ilimitados</li>
                     </ul>
-                    <!-- SEÇÃO DE OBSERVAÇÕES (aparece apenas se houver texto) -->
                     <div id="preview-commercial-notes-container" style="display: none; margin: 15px 0;">
                         <h3 style="font-size: 14px; color: #075E54; margin: 8px 0;">4. OBSERVAÇÕES COMERCIAIS</h3>
                         <div id="preview-commercial-notes" style="background: #fff3e0; padding: 10px; border-left: 4px solid #ff9800; border-radius: 4px; font-style: italic;"></div>
@@ -303,14 +378,12 @@
                             <th>Valor</th>
                         </tr>
                         <tbody id="investmentTableBody">
-                            <!-- As linhas serão geradas dinamicamente pelo JavaScript -->
                         </tbody>
                     </table>
                     <div style="background: #e8f5e9; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 11px;">
                         <h3 style="font-size: 13px; margin: 5px 0;">INVESTIMENTO TOTAL ESTIMADO</h3>
                         <p><strong>Exemplo para <span id="preview-num-connections-total">1</span> conexão(ões) + integrações:</strong></p>
                         <div id="totalBreakdown">
-                            <!-- Os itens de custo total serão inseridos aqui dinamicamente -->
                         </div>
                         <p><strong>Total Mensal: R$ <span id="preview-total">750</span>,00 /mês</strong></p>
                         <p>Implantação: <strong>R$ <span id="preview-total-implementation">950</span>,00 (único)</strong></p>
@@ -324,14 +397,15 @@
                 <div style="text-align: center; padding: 8px; background: #073d36; color: white; border-radius: 0 0 4px 4px; margin: 15px -20px -20px -20px; font-size: 10px;">
                     <p>Rua Sete de setembro, 2734, sala 21 - Cascavel - PR</p>
                     <p>© <span id="current-year">2025</span> - Todos os direitos reservados</p>
-                    <!-- VERSÃO DO SISTEMA -->
                     <p style="font-size: 9px; opacity: 0.7; margin-top: 4px;">v2025.04.03-1430</p>
                 </div>
             </div>
+            
             <div class="actions">
                 <button onclick="saveProposal()">Salvar Proposta</button>
-                <button onclick="window.print()">Imprimir / Gerar PDF</button>
+                <button onclick="generatePDF()">Imprimir / Gerar PDF</button>
                 <button class="btn-secondary" onclick="clearForm()">Nova Proposta</button>
+                <button class="btn-secondary" onclick="window.print()">Imprimir Direto</button>
             </div>
         </div>
         <div id="history" class="tab-content">
@@ -348,8 +422,8 @@
             </div>
         </div>
     </div>
+
     <script>
-        // Função para mostrar/ocultar abas
         function showTab(tabId) {
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
@@ -363,14 +437,14 @@
                 loadHistory();
             }
         }
-        // Função para formatar a data no formato dd/mm/aaaa
+
         function formatDate(date) {
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             return `${day}/${month}/${year}`;
         }
-        // Função para formatar a data e hora completa
+
         function formatDateTime(date) {
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -379,18 +453,24 @@
             const minutes = String(date.getMinutes()).padStart(2, '0');
             return `${day}/${month}/${year} ${hours}:${minutes}`;
         }
-        // Obter a data atual
+
         const currentDate = new Date();
         document.getElementById('current-date').textContent = formatDate(currentDate);
-        // Calcular a data de expiração (30 dias a partir de hoje)
         const expiryDate = new Date();
         expiryDate.setDate(currentDate.getDate() + 30);
         document.getElementById('expiry-date').textContent = formatDate(expiryDate);
-        // Definir o ano atual como 2025
         document.getElementById('current-year').textContent = "2025";
-        // Função para atualizar a visualização com os valores do formulário
+
+        function formatText(command, value = null) {
+            document.getElementById('commercialNotes').focus();
+            if (value) {
+                document.execCommand(command, false, value);
+            } else {
+                document.execCommand(command, false, null);
+            }
+        }
+
         function updatePreview(suppressAlert = false) {
-            // Obter valores do formulário
             const clientName = document.getElementById('clientName').value;
             const clientCity = document.getElementById('clientCity').value;
             const licensePrice = parseInt(document.getElementById('licensePrice').value);
@@ -399,100 +479,85 @@
             const implementationPrice = parseInt(document.getElementById('implementationPrice').value);
             const additionalConnections = parseInt(document.getElementById('additionalConnections').value);
             const numConnections = parseInt(document.getElementById('numConnections').value) || 1;
-            const commercialNotes = document.getElementById('commercialNotes').value.trim();
-            // Calcular o custo total da licença com base no número de conexões
+            const commercialNotes = document.getElementById('commercialNotes').innerHTML.trim();
+
             let totalLicenseCost = 0;
             if (numConnections <= 5) {
                 totalLicenseCost = licensePrice * numConnections;
             } else {
                 totalLicenseCost = (licensePrice * 5) + (additionalConnections * (numConnections - 5));
             }
-            // Calcular totais
             const totalMonthly = totalLicenseCost + integrationPrice + researchPrice;
-            // Atualizar visualização
+            
             document.getElementById('preview-client').textContent = `${clientName} - ${clientCity}`;
             document.getElementById('preview-num-connections-total').textContent = numConnections;
-            // Atualizar a tabela de investimento dinamicamente
+
             const tableBody = document.getElementById('investmentTableBody');
             tableBody.innerHTML = '';
-            // Linha da Licença (sempre visível, pois é o produto principal)
+
             const licenseRow = document.createElement('tr');
-            licenseRow.innerHTML = `
-                <td>Licença Mensal (por conexão)</td>
-                <td>R$ ${licensePrice},00 /mês</td>
-            `;
+            licenseRow.innerHTML = `<td>Licença Mensal (por conexão)</td><td>R$ ${licensePrice},00 /mês</td>`;
             tableBody.appendChild(licenseRow);
-            // Linha de Conexões Adicionais (sempre visível, para informação)
+
             const additionalRow = document.createElement('tr');
-            additionalRow.innerHTML = `
-                <td>Conexões Adicionais (a partir da 6ª)</td>
-                <td>R$ ${additionalConnections},00 /mês cada</td>
-            `;
+            additionalRow.innerHTML = `<td>Conexões Adicionais (a partir da 6ª)</td><td>R$ ${additionalConnections},00 /mês cada</td>`;
             tableBody.appendChild(additionalRow);
-            // Adiciona linha de Integração apenas se o valor for > 0
+
             if (integrationPrice > 0) {
                 const integrationRow = document.createElement('tr');
-                integrationRow.innerHTML = `
-                    <td>Integração com Sistema de Gestão</td>
-                    <td>R$ ${integrationPrice},00 /mês</td>
-                `;
+                integrationRow.innerHTML = `<td>Integração com Sistema de Gestão</td><td>R$ ${integrationPrice},00 /mês</td>`;
                 tableBody.appendChild(integrationRow);
             }
-            // Adiciona linha de Pesquisa apenas se o valor for > 0
+
             if (researchPrice > 0) {
                 const researchRow = document.createElement('tr');
-                researchRow.innerHTML = `
-                    <td>Pesquisa de Satisfação (NPS)</td>
-                    <td>R$ ${researchPrice},00 /mês</td>
-                `;
+                researchRow.innerHTML = `<td>Pesquisa de Satisfação (NPS)</td><td>R$ ${researchPrice},00 /mês</td>`;
                 tableBody.appendChild(researchRow);
             }
-            // Adiciona linha de Implantação apenas se o valor for > 0
+
             if (implementationPrice > 0) {
                 const implementationRow = document.createElement('tr');
-                implementationRow.innerHTML = `
-                    <td>Implantação (configuração inicial)</td>
-                    <td>R$ ${implementationPrice},00 (único)</td>
-                `;
+                implementationRow.innerHTML = `<td>Implantação (configuração inicial)</td><td>R$ ${implementationPrice},00 (único)</td>`;
                 tableBody.appendChild(implementationRow);
             }
-            // Atualizar o bloco de investimento total estimado
+
             const totalBreakdown = document.getElementById('totalBreakdown');
             totalBreakdown.innerHTML = '';
-            // Sempre mostra o total da licença
+
             const licenseTotalItem = document.createElement('p');
             licenseTotalItem.innerHTML = `Licença: <strong>R$ ${totalLicenseCost.toLocaleString('pt-BR')},00 /mês</strong>`;
             totalBreakdown.appendChild(licenseTotalItem);
-            // Mostra Integração no resumo apenas se > 0
+
             if (integrationPrice > 0) {
                 const integrationTotalItem = document.createElement('p');
                 integrationTotalItem.innerHTML = `Integração: <strong>R$ ${integrationPrice},00 /mês</strong>`;
                 totalBreakdown.appendChild(integrationTotalItem);
             }
-            // Mostra Pesquisa no resumo apenas se > 0
+
             if (researchPrice > 0) {
                 const researchTotalItem = document.createElement('p');
                 researchTotalItem.innerHTML = `Pesquisa: <strong>R$ ${researchPrice},00 /mês</strong>`;
                 totalBreakdown.appendChild(researchTotalItem);
             }
-            // Atualiza os totais gerais
+
             document.getElementById('preview-total').textContent = totalMonthly.toLocaleString('pt-BR');
             document.getElementById('preview-total-implementation').textContent = implementationPrice;
-            // Atualizar as Observações Comerciais
+
             const notesContainer = document.getElementById('preview-commercial-notes-container');
             const notesContent = document.getElementById('preview-commercial-notes');
-            if (commercialNotes) {
-                notesContent.innerHTML = commercialNotes.replace(/\n/g, '<br>');
+            
+            if (commercialNotes && commercialNotes !== 'Ex: Valores API Oficial Whatsapp:<br>Utility (Exames, Confirmações) - R$0,13<br>Marketing (Aniversário, Campanhas): R$0,99') {
+                notesContent.innerHTML = commercialNotes;
                 notesContainer.style.display = 'block';
             } else {
                 notesContainer.style.display = 'none';
             }
-            // Exibe alerta apenas se suppressAlert for false
+            
             if (!suppressAlert) {
                 alert('Proposta atualizada com sucesso!');
             }
         }
-        // Função para salvar a proposta no histórico
+
         function saveProposal() {
             const clientName = document.getElementById('clientName').value;
             if (!clientName) {
@@ -511,19 +576,18 @@
                 researchPrice: document.getElementById('researchPrice').value,
                 implementationPrice: document.getElementById('implementationPrice').value,
                 additionalConnections: document.getElementById('additionalConnections').value,
-                numConnections: document.getElementById('numConnections').value, // Salva o número de conexões
-                commercialNotes: document.getElementById('commercialNotes').value // Salva as observações
+                numConnections: document.getElementById('numConnections').value,
+                commercialNotes: document.getElementById('commercialNotes').innerHTML
             };
             let history = JSON.parse(localStorage.getItem('proposalHistory')) || [];
             history.unshift(proposal);
-            // Manter apenas as 50 propostas mais recentes
             if (history.length > 50) {
                 history = history.slice(0, 50);
             }
             localStorage.setItem('proposalHistory', JSON.stringify(history));
             alert(`Proposta para ${clientName} salva no histórico!`);
         }
-        // Função para carregar o histórico
+
         function loadHistory() {
             const historyList = document.getElementById('historyList');
             const emptyHistory = document.getElementById('emptyHistory');
@@ -535,7 +599,6 @@
             }
             emptyHistory.style.display = 'none';
             history.forEach(proposal => {
-                // Recalcula o total da licença para exibir no histórico
                 const licensePrice = parseInt(proposal.licensePrice);
                 const additionalConnections = parseInt(proposal.additionalConnections);
                 const numConnections = parseInt(proposal.numConnections) || 1;
@@ -546,7 +609,6 @@
                     totalLicenseCost = (licensePrice * 5) + (additionalConnections * (numConnections - 5));
                 }
                 const total = totalLicenseCost + parseInt(proposal.integrationPrice) + parseInt(proposal.researchPrice);
-                const date = new Date(proposal.date);
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 item.innerHTML = `
@@ -562,7 +624,7 @@
                 historyList.appendChild(item);
             });
         }
-        // Função para carregar uma proposta do histórico
+
         function loadProposal(proposal) {
             document.getElementById('clientName').value = proposal.clientName;
             document.getElementById('clientCity').value = proposal.clientCity;
@@ -571,18 +633,18 @@
             document.getElementById('researchPrice').value = proposal.researchPrice;
             document.getElementById('implementationPrice').value = proposal.implementationPrice;
             document.getElementById('additionalConnections').value = proposal.additionalConnections;
-            document.getElementById('numConnections').value = proposal.numConnections || 1; // Carrega o número de conexões
-            document.getElementById('commercialNotes').value = proposal.commercialNotes || ''; // Carrega as observações
+            document.getElementById('numConnections').value = proposal.numConnections || 1;
+            document.getElementById('commercialNotes').innerHTML = proposal.commercialNotes || 'Ex: Valores API Oficial Whatsapp:<br>Utility (Exames, Confirmações) - R$0,13<br>Marketing (Aniversário, Campanhas): R$0,99';
             updatePreview();
         }
-        // Função para limpar o histórico
+
         function clearHistory() {
             if (confirm('Tem certeza que deseja limpar todo o histórico?')) {
                 localStorage.removeItem('proposalHistory');
                 loadHistory();
             }
         }
-        // Função para limpar o formulário
+
         function clearForm() {
             if (confirm('Deseja criar uma nova proposta? Os dados atuais serão perdidos.')) {
                 document.getElementById('clientName').value = '';
@@ -593,21 +655,71 @@
                 document.getElementById('researchPrice').value = '200';
                 document.getElementById('implementationPrice').value = '950';
                 document.getElementById('additionalConnections').value = '100';
-                document.getElementById('commercialNotes').value = ''; // Limpa as observações
-                updatePreview(true); // Chama sem alerta
+                document.getElementById('commercialNotes').innerHTML = 'Ex: Valores API Oficial Whatsapp:<br>Utility (Exames, Confirmações) - R$0,13<br>Marketing (Aniversário, Campanhas): R$0,99';
+                updatePreview(true);
             }
         }
-        // Função para melhorar com IA (simulação)
+
         function improveWithAI() {
-            alert('Recurso de IA em desenvolvimento. Em uma implementação real, esta função enviaria os dados para uma API de IA como ChatGPT para melhorar o conteúdo e layout da proposta.');
-            // Simulação de melhoria com IA
+            alert('Recurso de IA em desenvolvimento.');
             document.getElementById('clientName').value = "Instituto Paranaense de Saúde Nossa Senhora de Fátima - " + 
                 document.getElementById('clientName').value;
             updatePreview();
         }
-        // Inicializar a visualização com os valores padrão, SEM exibir o alerta
+
+        function generatePDF() {
+            const clientName = document.getElementById('clientName').value;
+            const element = document.getElementById('pdf-preview');
+            
+            // Configurações otimizadas para A4
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `Proposta_${clientName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}_${formatDate(currentDate).replace(/\//g, '-')}.pdf`,
+                image: { 
+                    type: 'jpeg', 
+                    quality: 0.98 
+                },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    width: 800, // Largura fixa para controle
+                    windowWidth: 800
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true
+                },
+                pagebreak: { mode: 'avoid-all' } // Evita quebra de página
+            };
+
+            // Adicionar estilos específicos para PDF
+            const originalStyles = element.getAttribute('style') || '';
+            element.style.width = '190mm';
+            element.style.margin = '0 auto';
+            element.style.padding = '10mm';
+            element.style.boxSizing = 'border-box';
+            element.style.fontSize = '11px';
+            element.style.lineHeight = '1.2';
+
+            alert('Gerando PDF... Aguarde alguns segundos.');
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restaurar estilos originais
+                element.setAttribute('style', originalStyles);
+            }).catch(error => {
+                console.error('Erro ao gerar PDF:', error);
+                alert('Erro ao gerar PDF. Tente usar a opção "Imprimir Direto".');
+                // Restaurar estilos originais
+                element.setAttribute('style', originalStyles);
+            });
+        }
+
+        // Inicializar
         window.onload = function() {
-            updatePreview(true); // Passa true para suprimir o alerta na inicialização
+            updatePreview(true);
         };
     </script>
 </body>
